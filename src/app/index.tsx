@@ -1,5 +1,10 @@
 import { NunitoText } from '@components/StyledText';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Home() {
-	return <NunitoText style={{ fontWeight: '700' }}>Hello</NunitoText>;
+	return (
+		<SafeAreaView>
+			<NunitoText className="text-red-dark text-xl font-bold">Hello</NunitoText>
+		</SafeAreaView>
+	);
 }

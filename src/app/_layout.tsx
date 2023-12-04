@@ -5,6 +5,7 @@ import {
 } from '@expo-google-fonts/nunito-sans';
 
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 
 export default function RootLayout() {
 	const [fontLoaded, fontError] = useFonts({
@@ -20,5 +21,10 @@ export default function RootLayout() {
 		return null;
 	}
 
-	return <Stack />;
+	return (
+		<>
+			<Stack screenOptions={{ headerShown: false }} />
+			<StatusBar />
+		</>
+	);
 }
