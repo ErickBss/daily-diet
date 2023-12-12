@@ -3,6 +3,7 @@ import { View, ViewProps } from 'react-native';
 import { ButtonIcon } from './buttonIcon';
 import { NunitoText } from './StyledText';
 import { colors } from '@utils/theme';
+import { router } from 'expo-router';
 import { tv } from 'tailwind-variants';
 
 const positiveLimit = 60;
@@ -36,10 +37,11 @@ export function Summary({ percentage, ...rest }: SummaryProps) {
 				color={
 					status === 'positive' ? colors['green-dark'] : colors['red-dark']
 				}
+				onPress={() => router.push('/analytics')}
 				className="self-end"
 			/>
 
-			<NunitoText className="font-bold text-3xl text-gray-700 text-center">
+			<NunitoText className="font-bold text-4xl text-gray-700 text-center">
 				{percentage}%
 			</NunitoText>
 			<NunitoText className="text-sm text-gray-600 text-center">

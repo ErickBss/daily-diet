@@ -1,15 +1,32 @@
 import { LogoSvg } from 'src/assets/svg/logoSvg';
 import { NunitoText } from './StyledText';
 import { View } from 'react-native';
+import {
+	SafeAreaView,
+	SafeAreaViewProps,
+} from 'react-native-safe-area-context';
+import { ButtonIcon } from './buttonIcon';
+import { colors } from '@utils/theme';
+import { router } from 'expo-router';
 
-export function Header() {
+type HeaderProps = SafeAreaViewProps & {
+	iconColor?: string;
+	children: React.ReactNode;
+};
+
+export function Header({
+	iconColor = colors.gray[600],
+	children,
+	...rest
+}: HeaderProps) {
 	return (
-		<View className="w-full justify-between items-center py-4 flex-row">
-			<LogoSvg />
-
-			<View className="w-10 h-10 border-2 border-gray-700 rounded-full items-center justify-center bg-gray-400">
-				<NunitoText>E</NunitoText>
-			</View>
-		</View>
+		<SafeAreaView className="px-4" {...rest}>
+			<ButtonIcon
+				icon="arrow-left"
+				color={iconColor}
+				onPress={() => router.back()}
+			/>
+			{children}
+		</SafeAreaView>
 	);
 }
