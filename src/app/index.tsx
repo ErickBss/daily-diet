@@ -3,111 +3,94 @@ import { Button } from '@components/button';
 import { MealItem } from '@components/mealItem';
 import { NunitoText } from '@components/StyledText';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { Summary } from '@components/summary';
-import dayjs from 'dayjs';
 import { LogoSvg } from 'src/assets/svg/logoSvg';
-import { router } from 'expo-router';
-
-export type MealItemProps = {
-	name: string;
-	hour: string;
-	date: string;
-	status: 'positive' | 'negative';
-};
-
-const meals: MealItemProps[] = [
-	{
-		name: 'X-tudo',
-		hour: '20:00',
-		date: dayjs().toISOString(),
-		status: 'negative',
-	},
-	{
-		name: 'Whey',
-		hour: '16:00',
-		date: dayjs().toISOString(),
-		status: 'positive',
-	},
-	{
-		name: 'Salada cesar com frango grelhado',
-		hour: '12:30',
-		date: dayjs().toISOString(),
-		status: 'positive',
-	},
-	{
-		name: 'Batata frita',
-		hour: '12:30',
-		date: dayjs().subtract(1, 'day').toISOString(),
-		status: 'negative',
-	},
-	{
-		name: 'Banana com aveia',
-		hour: '16:00',
-		date: dayjs().subtract(1, 'day').toISOString(),
-		status: 'positive',
-	},
-	{
-		name: 'Pizza',
-		hour: '16:00',
-		date: dayjs().subtract(1, 'day').toISOString(),
-		status: 'negative',
-	},
-	{
-		name: 'Bolo',
-		hour: '16:00',
-		date: dayjs().subtract(1, 'day').toISOString(),
-		status: 'negative',
-	},
-];
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { MealDTO } from '@storage/dto/meal';
+import { getAll } from '@storage/getAll';
+import { FlatList } from 'react-native-gesture-handler';
+import { EmptyList } from '@components/emptyList';
+import { calcPercentage } from '@utils/functions';
+import { Loading } from '@components/loading';
 
 export default function Home() {
+	const [meals, setMeals] = useState<MealDTO[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+
+	async function fetchMeals() {
+		try {
+			setIsLoading(true);
+			await getAll().then(setMeals);
+		} catch (error) {
+			console.log(error);
+		} finally {
+			setIsLoading(false);
+		}
+	}
+
 	function verifyIfDateIsDifferent(current: string, previous?: string) {
 		if (!previous) return true;
 
-		if (dayjs(current).isSame(previous, 'day')) return false;
+		if (current === previous) return false;
 
 		return true;
 	}
 
+	useFocusEffect(
+		useCallback(() => {
+			fetchMeals();
+		}, []),
+	);
+
 	return (
 		<SafeAreaView className="px-5">
-			<ScrollView showsVerticalScrollIndicator={false} className="mb-10">
-				<View className="w-full justify-between items-center py-4 flex-row">
-					<LogoSvg />
+			<View className="w-full justify-between items-center py-4 flex-row">
+				<LogoSvg />
 
-					<View className="w-10 h-10 border-2 border-gray-700 rounded-full items-center justify-center bg-gray-400">
-						<NunitoText>E</NunitoText>
-					</View>
+				<View className="w-10 h-10 border-2 border-gray-700 rounded-full items-center justify-center bg-gray-400">
+					<NunitoText>E</NunitoText>
 				</View>
+			</View>
 
-				<Summary percentage={70.82} className="mt-5" />
+			<Summary percentage={calcPercentage(meals)} className="mt-5" />
 
-				<NunitoText className="mt-8 text-gray-700 text-base mb-1">
-					Refeições
-				</NunitoText>
+			<NunitoText className="mt-8 text-gray-700 text-base mb-1">
+				Refeições
+			</NunitoText>
 
-				<Button
-					text="Nova refeição"
-					icon="plus"
-					className="mb-3"
-					onPress={() => router.push('/create')}
+			<Button
+				text="Nova refeição"
+				icon="plus"
+				className="mb-3"
+				onPress={() => router.push('/create')}
+			/>
+
+			{isLoading ? (
+				<Loading />
+			) : (
+				<FlatList
+					data={meals}
+					keyExtractor={(item) => item?.id?.toString()}
+					renderItem={({ item: meal, index }) => (
+						<MealItem
+							id={meal.id}
+							hour={meal.hour}
+							name={meal.name}
+							status={meal.status}
+							date={meal.date}
+							renderDateLabel={verifyIfDateIsDifferent(
+								meal.date,
+								meals?.[index - 1]?.date,
+							)}
+						/>
+					)}
+					ListEmptyComponent={() => (
+						<EmptyList message="Adicione uma refeição" />
+					)}
 				/>
-
-				{meals.map((meal, index) => (
-					<MealItem
-						key={meal.name}
-						hour={meal.hour}
-						name={meal.name}
-						status={meal.status}
-						date={meal.date}
-						renderDateLabel={verifyIfDateIsDifferent(
-							meal.date,
-							meals?.[index - 1]?.date,
-						)}
-					/>
-				))}
-			</ScrollView>
+			)}
 		</SafeAreaView>
 	);
 }

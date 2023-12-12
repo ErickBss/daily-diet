@@ -10,6 +10,7 @@ import { View } from 'react-native';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { router } from 'expo-router';
+import { createMeal } from '@storage/create';
 
 const createSchema = z.object({
 	name: z.string({ required_error: 'Nome é obrigatório' }),
@@ -44,9 +45,18 @@ export default function Create() {
 		resolver: zodResolver(createSchema),
 	});
 
-	function onSubmit(data: createProps) {
-		console.log(data);
-		router.push('/created/positive');
+	async function onSubmit(data: createProps) {
+		try {
+			await createMeal(data);
+
+			if (data.status === 'positive') {
+				router.push('/created/positive');
+			} else {
+				router.push('/created/negative');
+			}
+		} catch (error) {
+			console.log(error);
+		}
 	}
 
 	useEffect(() => {
@@ -129,8 +139,7 @@ export default function Create() {
 					<Button
 						text="Cadastrar refeição"
 						className="mt-auto"
-						onPress={() => router.push('/created/positive')}
-						// onPress={handleSubmit(onSubmit)}
+						onPress={handleSubmit(onSubmit)}
 					/>
 				</View>
 			</View>

@@ -6,7 +6,7 @@ import { colors } from '@utils/theme';
 import { router } from 'expo-router';
 import { tv } from 'tailwind-variants';
 
-const positiveLimit = 60;
+export const positiveLimit = 60;
 
 type SummaryProps = ViewProps & {
 	percentage: number;

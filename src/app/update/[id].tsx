@@ -4,12 +4,16 @@ import { Header } from '@components/header';
 import { Input } from '@components/input';
 import { Label } from '@components/label';
 import { RadioButton } from '@components/radioButton';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { View } from 'react-native';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { router } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { getOne } from '@storage/getOne';
+import { MealDTO } from '@storage/dto/meal';
+import { Loading } from '@components/loading';
+import { update } from '@storage/update';
 
 const updateSchema = z.object({
 	name: z.string({ required_error: 'Nome é obrigatório' }),
@@ -34,6 +38,7 @@ const updateSchema = z.object({
 type updateProps = z.infer<typeof updateSchema>;
 
 export default function Update() {
+	const { id }: { id: string } = useLocalSearchParams();
 	const [isOnDiet, setOnDiet] = useState<boolean | null>(null);
 	const {
 		setValue,
@@ -43,10 +48,41 @@ export default function Update() {
 	} = useForm<updateProps>({
 		resolver: zodResolver(updateSchema),
 	});
+	const [meal, setMeal] = useState<MealDTO>();
+	const [isLoading, setIsLoading] = useState(true);
 
-	function onSubmit(data: updateProps) {
-		console.log(data);
-		router.push('/created/positive');
+	async function fetchMeal() {
+		try {
+			setIsLoading(true);
+			await getOne(parseInt(id)).then((response) => {
+				setMeal(response);
+				setOnDiet(response?.status === 'positive');
+
+				if (response) {
+					Object.keys(response).map((key) => {
+						setValue(key as any, (response as any)[key]);
+					});
+				}
+			});
+		} catch (error) {
+			console.log(error);
+		} finally {
+			setIsLoading(false);
+		}
+	}
+
+	async function onSubmit(data: updateProps) {
+		try {
+			await update(parseInt(id), data);
+
+			if (data.status === 'positive') {
+				router.push('/created/positive');
+			} else {
+				router.push('/created/negative');
+			}
+		} catch (error) {
+			console.log(error);
+		}
 	}
 
 	useEffect(() => {
@@ -57,6 +93,11 @@ export default function Update() {
 		register('status');
 	}, []);
 
+	useFocusEffect(
+		useCallback(() => {
+			fetchMeal();
+		}, []),
+	);
 	return (
 		<View className="bg-gray-300 pt-5 flex-1">
 			<Header className="flex-row items-center">
@@ -64,76 +105,83 @@ export default function Update() {
 					Editar refeição
 				</NunitoText>
 			</Header>
-			<View className=" bg-white flex-1 mt-6 rounded-t-3xl pt-10 pb-5 px-4 items-center">
-				<View className="w-full h-full">
-					<Label>Nome</Label>
-					<Input
-						errorMessage={errors?.name?.message}
-						onChangeText={(text) => setValue('name', text)}
-					/>
+			{isLoading ? (
+				<Loading />
+			) : (
+				<View className=" bg-white flex-1 mt-6 rounded-t-3xl pt-10 pb-5 px-4 items-center">
+					<View className="w-full h-full">
+						<Label>Nome</Label>
+						<Input
+							errorMessage={errors?.name?.message}
+							onChangeText={(text) => setValue('name', text)}
+							defaultValue={meal?.name}
+						/>
 
-					<Label className="mt-3">Descrição</Label>
-					<Input
-						textAlignVertical="top"
-						numberOfLines={5}
-						multiline
-						errorMessage={errors?.description?.message}
-						onChangeText={(text) => setValue('description', text)}
-					/>
+						<Label className="mt-3">Descrição</Label>
+						<Input
+							textAlignVertical="top"
+							numberOfLines={5}
+							multiline
+							errorMessage={errors?.description?.message}
+							onChangeText={(text) => setValue('description', text)}
+							defaultValue={meal?.description}
+						/>
 
-					<View className="flex-row mt-3">
-						<View className="flex-1 mr-5">
-							<Label>Data</Label>
-							<Input
-								inputMode="numeric"
-								placeholder="DD/MM/YYYY"
-								errorMessage={errors?.date?.message}
-								onChangeText={(text) => setValue('date', text)}
+						<View className="flex-row mt-3">
+							<View className="flex-1 mr-5">
+								<Label>Data</Label>
+								<Input
+									inputMode="numeric"
+									placeholder="DD/MM/YYYY"
+									errorMessage={errors?.date?.message}
+									onChangeText={(text) => setValue('date', text)}
+									defaultValue={meal?.date}
+								/>
+							</View>
+
+							<View className="flex-1">
+								<Label>Hora</Label>
+								<Input
+									inputMode="numeric"
+									placeholder="HH:MM"
+									errorMessage={errors?.hour?.message}
+									onChangeText={(text) => setValue('hour', text)}
+									defaultValue={meal?.hour}
+								/>
+							</View>
+						</View>
+
+						<Label className="mt-3">Está dentro da dieta?</Label>
+						<View className="flex-row mb-3">
+							<RadioButton
+								text="Sim"
+								type="positive"
+								selected={!!isOnDiet}
+								className="mr-5"
+								onPress={() => {
+									setOnDiet(true);
+									setValue('status', 'positive');
+								}}
+							/>
+							<RadioButton
+								text="Não"
+								type="negative"
+								selected={isOnDiet === false}
+								onPress={() => {
+									setOnDiet(false);
+									setValue('status', 'negative');
+								}}
 							/>
 						</View>
 
-						<View className="flex-1">
-							<Label>Hora</Label>
-							<Input
-								inputMode="numeric"
-								placeholder="HH:MM"
-								errorMessage={errors?.hour?.message}
-								onChangeText={(text) => setValue('hour', text)}
-							/>
-						</View>
-					</View>
-
-					<Label className="mt-3">Está dentro da dieta?</Label>
-					<View className="flex-row mb-3">
-						<RadioButton
-							text="Sim"
-							type="positive"
-							selected={!!isOnDiet}
-							className="mr-5"
-							onPress={() => {
-								setOnDiet(true);
-								setValue('status', 'positive');
-							}}
-						/>
-						<RadioButton
-							text="Não"
-							type="negative"
-							selected={isOnDiet === false}
-							onPress={() => {
-								setOnDiet(false);
-								setValue('status', 'negative');
-							}}
+						<Button
+							text="Salvar alterações"
+							className="mt-auto"
+							onPress={handleSubmit(onSubmit)}
 						/>
 					</View>
-
-					<Button
-						text="Salvar alterações"
-						className="mt-auto"
-						onPress={() => router.push('/created/positive')}
-						// onPress={handleSubmit(onSubmit)}
-					/>
 				</View>
-			</View>
+			)}
 		</View>
 	);
 }

@@ -11,11 +11,15 @@ export default function CreatedNegative() {
 			<NunitoText className="font-bold text-2xl text-red-dark">
 				Que pena!
 			</NunitoText>
-			<View className="flex-row items-baseline">
+			<View className="flex-row items-baseline justify-center flex-wrap w-10/12">
 				<NunitoText className="text-base text-gray-700">Você</NunitoText>
 				<NunitoText className="font-bold text-base"> saiu da dieta</NunitoText>
 				<NunitoText className="text-base text-gray-700">
-					dessa vez, mas continue se esforçando e não desista!
+					{' '}
+					dessa vez, mas continue
+				</NunitoText>
+				<NunitoText className="text-base text-gray-700">
+					se esforçando e não desista!
 				</NunitoText>
 			</View>
 

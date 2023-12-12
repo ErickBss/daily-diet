@@ -1,21 +1,19 @@
-import {
-	Text,
-	TouchableOpacity,
-	TouchableOpacityProps,
-	View,
-} from 'react-native';
+import { TouchableOpacity, TouchableOpacityProps, View } from 'react-native';
 
-import { Feather } from '@expo/vector-icons';
-import { MealItemProps } from 'src/app';
 import { NunitoText } from './StyledText';
 import dayjs from 'dayjs';
 import { tv } from 'tailwind-variants';
 import { router } from 'expo-router';
+import { MealDTO } from '@storage/dto/meal';
 
-type DataProps = TouchableOpacityProps &
-	MealItemProps & {
-		renderDateLabel?: boolean;
-	};
+type DataProps = {
+	id: number;
+	name: string;
+	date: string;
+	hour: string;
+	status: 'positive' | 'negative';
+	renderDateLabel?: boolean;
+};
 
 const statusIndicator = tv({
 	base: 'w-4 h-4 rounded-full',
@@ -28,25 +26,34 @@ const statusIndicator = tv({
 });
 
 export function MealItem({
+	id,
 	hour,
 	name,
 	status,
 	date,
 	renderDateLabel = false,
-	...rest
 }: DataProps) {
+	function formatDate() {
+		let parsedDate = '';
+		date
+			.split('/')
+			.reverse()
+			.forEach((item, index) => {
+				parsedDate += item;
+				if (index !== 2) parsedDate += '-';
+			});
+
+		return dayjs(parsedDate).format('DD.MM.YY');
+	}
 	return (
 		<>
 			{renderDateLabel && (
 				<NunitoText className="mt-4 mb-2 font-bold text-gray-700 text-lg">
-					{dayjs(date).format('DD.MM.YY')}
+					{formatDate()}
 				</NunitoText>
 			)}
 			<TouchableOpacity
-				{...rest}
-				onPress={() =>
-					router.push({ pathname: '/meal/[id]', params: { id: name } })
-				}
+				onPress={() => router.push({ pathname: '/meal/[id]', params: { id } })}
 				className="w-full rounded-md mb-2 flex-row p-3 items-center border border-gray-400"
 			>
 				<View className="flex-row justify-start items-center flex-1">
